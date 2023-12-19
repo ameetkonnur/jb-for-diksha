@@ -11,6 +11,8 @@ from tenacity import (
     after_log,
     retry_if_not_exception_type,
 )
+from azure.storage.blob import generate_blob_sas, BlobSasPermissions
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ class AzureStorage(Storage):
         self.client = BlobServiceClient(account_url=self.account_url, credential=DefaultAzureCredential())
 
     async def write_file(self, file_path: str, content: bytes):
-        blob_name = f"{self.base_path}/{file_path}"
+        blob_name = f"{self.base_path}{file_path}"
         blob_client = self.client.get_blob_client(self.container_name, blob_name)
         await blob_client.upload_blob(content, overwrite=True)
 
@@ -72,17 +74,19 @@ class AzureStorage(Storage):
     async def make_public(self, file_path: str) -> str:
         blob_name = f"{self.base_path}/{file_path}"
         blob_client = self.client.get_blob_client(self.container_name, blob_name)
+        # #print ("\n" + str(self.client.get_user_delegation_key(datetime.utcnow(), datetime.utcnow() + timedelta(days=365))) + "\n")
+        # sas_token = generate_blob_sas(
+        #     account_name=self.client.account_name,
+        #     container_name=self.container_name,
+        #     blob_name=blob_name,
+        #     user_delegation_key=self.client.get_user_delegation_key(datetime.utcnow(), datetime.utcnow() + timedelta(days=365)),
+        #     permission=BlobSasPermissions(read=True),
+        #     start=datetime.utcnow(),
+        #     expiry=datetime.utcnow() + timedelta(days=365),
+        #     #DefaultAzureCredential=True
+        # )
 
-        sas_token = generate_blob_sas(
-            account_name=self.client.account_name,
-            container_name=self.container_name,
-            blob_name=blob_name,
-            account_key=self.client.credential.account_key,
-            permission=BlobSasPermissions(read=True),
-            expiry=datetime.utcnow() + timedelta(days=365)
-        )
-
-        return f"{blob_client.url}?{sas_token}"
+        return f"{blob_client.url}"
     
     async def public_url(self, file_path: str) -> str:
         blob_name = f"{self.base_path}/{file_path}"
@@ -105,6 +109,39 @@ class AzureStorage(Storage):
         target_blob_client = self.client.get_blob_client(target_container, target_file_path)
         copy_source_url = source_blob_client.url
         await target_blob_client.start_copy_from_url(copy_source_url)
+
+    async def shutdown(self):
+        pass  # No action needed to close BlobServiceClient
+
+    async def list_subfolders(
+        self, folder_path: str, start_offset: str = "", end_offset: str = ""
+    ) -> AsyncIterator[str]:
+        prefix = f"{self._relative_path(folder_path)}/"
+        container_client = self.client.get_container_client(self.container_name)
+
+        blob_iterator: AsyncItemPaged = container_client.list_blobs(
+            name_starts_with=prefix, delimiter="/"
+        )
+
+        async for blob in blob_iterator.by_page():
+            for blob_prefix in blob.prefixes:
+                folder_name = blob_prefix[len(prefix):].strip('/')
+                if start_offset and folder_name < start_offset:
+                    continue
+                if end_offset and folder_name > end_offset:
+                    return
+                yield folder_name
+
+    def _relative_path(self, path_suffix: str):
+        if self.base_path is None or self.base_path == "":
+            return path_suffix
+        elif path_suffix == "":
+            return self.base_path
+        else:
+            return f"{self.base_path}/{path_suffix}"
+
+    def path(self, path_suffix: str):
+        return f"https://{self.account_name}.blob.core.windows.net/{self.container_name}/{self._relative_path(path_suffix)}"
 
     @classmethod
     def new_azure_file_adapter(cls, connection_string: str, base_path: str) -> "AzureStorage":

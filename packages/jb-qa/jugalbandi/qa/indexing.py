@@ -7,6 +7,7 @@ from gpt_index import GPTSimpleVectorIndex, SimpleDirectoryReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings.azure_openai import AzureOpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from jugalbandi.document_collection import (
     DocumentCollection,
@@ -69,8 +70,12 @@ class LangchainIndexer(Indexer):
                 )
                 counter += 1
         try:
+            # search_index = FAISS.from_documents(source_chunks,
+            #                                     OpenAIEmbeddings(client=""))
+            
+             # changes to call Azure OpenAI Embeddings
             search_index = FAISS.from_documents(source_chunks,
-                                                OpenAIEmbeddings(client=""))
+                                         AzureOpenAIEmbeddings(azure_deployment="ada-002",openai_api_version="2023-05-15",retry_min_seconds=30, disallowed_special=()))  # type: ignore
             await self._save_index_files(search_index, doc_collection)
         except openai.error.RateLimitError as e:
             raise ServiceUnavailableException(

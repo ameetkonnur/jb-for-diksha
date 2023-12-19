@@ -7,7 +7,7 @@ from .repository import (
     DocumentFormat,
 )
 
-from jugalbandi.storage import Storage, NullStorage, LocalStorage, GoogleStorage
+from jugalbandi.storage import Storage, NullStorage, LocalStorage, GoogleStorage, AzureStorage
 
 __all__ = [
     "DocumentRepository",
@@ -17,6 +17,7 @@ __all__ = [
     "WrapSyncReader",
     "Storage",
     "GoogleStorage",
+    "AzureStorage",
     "LocalStorage",
     "NullStorage",
     "DocumentFormat",

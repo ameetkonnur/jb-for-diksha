@@ -2,6 +2,7 @@ from typing import List
 import openai
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings.azure_openai import AzureOpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain import PromptTemplate, OpenAI, LLMChain
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -62,8 +63,13 @@ async def querying_with_langchain(document_collection: DocumentCollection, query
                                                    "index.pkl")
     index_folder_path = document_collection.local_index_folder("langchain")
     try:
+        # search_index = FAISS.load_local(index_folder_path,
+        #                                 OpenAIEmbeddings())  # type: ignore
+
+        # changes to call Azure OpenAI Embeddings
         search_index = FAISS.load_local(index_folder_path,
-                                        OpenAIEmbeddings())  # type: ignore
+                                          AzureOpenAIEmbeddings(azure_deployment="ada-002",openai_api_version="2023-05-15",retry_min_seconds=30, disallowed_special=()))  # type: ignore
+                                        
         chain = load_qa_with_sources_chain(
             OpenAI(temperature=0), chain_type="map_reduce"  # type: ignore
         )
@@ -102,8 +108,13 @@ async def querying_with_langchain_gpt4(document_collection: DocumentCollection,
                                                    "index.pkl")
     index_folder_path = document_collection.local_index_folder("langchain")
     try:
+        # search_index = FAISS.load_local(index_folder_path,
+        #                                 OpenAIEmbeddings())  # type: ignore
+
+        # changes to call Azure OpenAI Embeddings
         search_index = FAISS.load_local(index_folder_path,
-                                        OpenAIEmbeddings())  # type: ignore
+                                         AzureOpenAIEmbeddings(azure_deployment="ada-002",openai_api_version="2023-05-15",retry_min_seconds=30, disallowed_special=()))  # type: ignore
+
         documents = search_index.similarity_search(query, k=5)
         contexts = [document.page_content for document in documents]
         augmented_query = augmented_query = (
@@ -157,8 +168,13 @@ async def querying_with_langchain_gpt3_5(document_collection: DocumentCollection
         model_name = "gpt-3.5-turbo"
 
     try:
+        # search_index = FAISS.load_local(index_folder_path,
+        #                                 OpenAIEmbeddings())  # type: ignore
+
+         # changes to call Azure OpenAI Embeddings
         search_index = FAISS.load_local(index_folder_path,
-                                        OpenAIEmbeddings())  # type: ignore
+                                         AzureOpenAIEmbeddings(azure_deployment="ada-002",openai_api_version="2023-05-15",retry_min_seconds=30, disallowed_special=()))  # type: ignore
+
         documents = search_index.similarity_search(query, k=5)
         if prompt != "":
             system_rules = prompt

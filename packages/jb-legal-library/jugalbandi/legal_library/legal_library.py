@@ -15,6 +15,7 @@ from jugalbandi.jiva_repository import JivaRepository
 from sklearn.feature_extraction.text import TfidfVectorizer
 from langchain.vectorstores.faiss import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings.azure_openai import AzureOpenAIEmbeddings
 from langchain.docstore.document import Document
 import re
 import os
@@ -304,7 +305,8 @@ class LegalLibrary(Library):
         processed_query = await self._preprocess_query(query)
         processed_query = processed_query.strip()
         await self.download_index_files("index.faiss", "index.pkl")
-        vector_db = FAISS.load_local("indexes", OpenAIEmbeddings())
+        #vector_db = FAISS.load_local("indexes", OpenAIEmbeddings())
+        vector_db = FAISS.load_local("indexes", AzureOpenAIEmbeddings(azure_deployment="ada-002",openai_api_version="2023-05-15",retry_min_seconds=30, disallowed_special=()))
         docs = vector_db.similarity_search(query=query, k=10)
 
         contexts = []
@@ -353,7 +355,8 @@ class LegalLibrary(Library):
         processed_query = await self._preprocess_query(query)
         processed_query = processed_query.strip()
         await self.download_index_files("index.faiss", "index.pkl")
-        vector_db = FAISS.load_local("indexes", OpenAIEmbeddings())
+        # vector_db = FAISS.load_local("indexes", OpenAIEmbeddings())
+        vector_db = FAISS.load_local("indexes", AzureOpenAIEmbeddings(azure_deployment="ada-002",openai_api_version="2023-05-15",retry_min_seconds=30, disallowed_special=()))
         docs = vector_db.similarity_search(query=query, k=10)
         return await self._generate_response(docs=docs, query=processed_query,
                                              email_id=email_id,

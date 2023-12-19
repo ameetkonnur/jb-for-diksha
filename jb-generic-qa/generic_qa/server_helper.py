@@ -13,6 +13,7 @@ from jugalbandi.document_collection import (
     DocumentCollection,
     LocalStorage,
     GoogleStorage,
+    AzureStorage
 )
 from jugalbandi.qa import (
     GPTIndexQAEngine,
@@ -60,12 +61,20 @@ async def verify_access_token(token: Annotated[str, Depends(reusable_oauth)]):
     return User(username=username, email=username)
 
 
+# @aiocached(cache={})
+# async def get_document_repository() -> DocumentRepository:
+#     # TODO: Rename the env variable
+#     return DocumentRepository(LocalStorage(os.environ["DOCUMENT_LOCAL_STORAGE_PATH"]),
+#                               GoogleStorage(os.environ["GCP_BUCKET_NAME"],
+#                               os.environ["GCP_BUCKET_FOLDER_NAME"]))
+
 @aiocached(cache={})
 async def get_document_repository() -> DocumentRepository:
     # TODO: Rename the env variable
     return DocumentRepository(LocalStorage(os.environ["DOCUMENT_LOCAL_STORAGE_PATH"]),
-                              GoogleStorage(os.environ["GCP_BUCKET_NAME"],
-                              os.environ["GCP_BUCKET_FOLDER_NAME"]))
+                              AzureStorage(os.environ["AZURE_BLOB_ACCOUNT_URL"],
+                              os.environ["AZURE_BLOB_CONTAINER"],
+                              os.environ["AZURE_BLOB_BASE_URL"]))
 
 
 async def get_document_collection(

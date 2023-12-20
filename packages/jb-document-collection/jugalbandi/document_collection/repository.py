@@ -165,6 +165,7 @@ class DocumentCollection:
         format: DocumentFormat = DocumentFormat.DEFAULT,
     ) -> bytes:
         full_filename = self._filename(filename, format)
+        print(full_filename)
         return await self.remote_store.read_file(full_filename)
 
     async def write_file(

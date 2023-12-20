@@ -145,10 +145,10 @@ async def upload_files(
     async for filename in document_collection.list_files():
         await text_converter.textify(filename, document_collection)
 
-    gpt_indexer = GPTIndexer()
+    #gpt_indexer = GPTIndexer()
     langchain_indexer = LangchainIndexer()
 
-    await gpt_indexer.index(document_collection)
+    #await gpt_indexer.index(document_collection)
     await langchain_indexer.index(document_collection)
     return {
         "uuid_number": document_collection.id,

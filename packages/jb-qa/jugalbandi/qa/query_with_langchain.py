@@ -65,7 +65,7 @@ async def querying_with_langchain(document_collection: DocumentCollection, query
     index_folder_path = document_collection.local_index_folder("langchain")
     try:
         search_index = FAISS.load_local(index_folder_path,
-                                        OpenAIEmbeddings())  # type: ignore
+                                        OpenAIEmbeddings(deployment="ada-002"))  # type: ignore
         chain = load_qa_with_sources_chain(
             OpenAI(temperature=0), chain_type="map_reduce"  # type: ignore
         )
@@ -105,7 +105,7 @@ async def querying_with_langchain_gpt4(document_collection: DocumentCollection,
     index_folder_path = document_collection.local_index_folder("langchain")
     try:
         search_index = FAISS.load_local(index_folder_path,
-                                        OpenAIEmbeddings())  # type: ignore
+                                        OpenAIEmbeddings(deployment="ada-002"))  # type: ignore
         documents = search_index.similarity_search(query, k=5)
         contexts = [document.page_content for document in documents]
         augmented_query = augmented_query = (
@@ -160,7 +160,7 @@ async def querying_with_langchain_gpt3_5(document_collection: DocumentCollection
 
     try:
         search_index = FAISS.load_local(index_folder_path,
-                                        OpenAIEmbeddings())  # type: ignore
+                                        OpenAIEmbeddings(deployment="ada-002"))  # type: ignore
         documents = search_index.similarity_search(query, k=5)
         if prompt != "":
             system_rules = prompt

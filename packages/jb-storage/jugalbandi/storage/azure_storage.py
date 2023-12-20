@@ -34,11 +34,13 @@ class AzureStorage(Storage):
     )
     
     async def read_file(self, file_path: str) -> bytes:
-        blob_name = f"{self.base_path}/{file_path}"
+        blob_name = f"{self.base_path}{file_path}"
         blob_client = self.client.get_blob_client(self.container_name, blob_name)
         try:
             download_stream = await blob_client.download_blob()
             return await download_stream.readall()
+        except Exception as e:
+            print(e)
         except ResourceNotFoundError:
             raise FileNotFoundError(f"file {file_path} not found")
 

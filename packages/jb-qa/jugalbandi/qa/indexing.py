@@ -3,7 +3,8 @@ import tempfile
 import aiofiles
 import openai
 from jugalbandi.core.errors import InternalServerException, ServiceUnavailableException
-from llama_index import VectorStoreIndex, SimpleDirectoryReader
+from llama_index import VectorStoreIndex, SimpleDirectoryReader, ServiceContext
+from llama_index.llms import AzureOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -27,6 +28,18 @@ class GPTIndexer(Indexer):
             files = [document_collection.local_file_path(file)
                      async for file in document_collection.list_files()]
             documents = SimpleDirectoryReader(input_files=files).load_data()
+            ### For Azure OpenAI
+            # llm = AzureOpenAI(
+            #     engine="ada-002",
+            #     model="text-embedding-ada-002",
+            #     azure_endpoint="https://openaiapk01.openai.azure.com/",
+            #     api_key="606abea98ee24949af802350d0e80cf6",
+            #     api_version="2023-07-01-preview",
+            # )
+            # service_context = ServiceContext.from_defaults(llm=llm)
+            # index = VectorStoreIndex.from_documents(documents, service_context=service_context)
+            # ###
+            
             index = VectorStoreIndex.from_documents(documents)
             index_content = index.storage_context.to_dict()
             index_str = json.dumps(index_content)
@@ -55,11 +68,13 @@ class LangchainIndexer(Indexer):
         source_chunks = []
         counter = 0
         async for filename in doc_collection.list_files():
+            print(filename)
             content = await doc_collection.read_file(filename, DocumentFormat.TEXT)
             public_text_url = await doc_collection.public_url(filename,
                                                               DocumentFormat.TEXT)
             content = content.decode('utf-8')
             content = content.replace("\\n", "\n")
+            print(content)
             for chunk in self.splitter.split_text(content):
                 new_metadata = {
                     "source": str(counter),
@@ -71,8 +86,13 @@ class LangchainIndexer(Indexer):
                 )
                 counter += 1
         try:
+            print("into embeddings")
+            # search_index = FAISS.from_documents(source_chunks,
+            #                                     OpenAIEmbeddings(client=""))
             search_index = FAISS.from_documents(source_chunks,
-                                                OpenAIEmbeddings(client=""))
+                                                OpenAIEmbeddings(client="",deployment="ada-002"))
+            print("finished embeddings")
+            print(search_index)
             await self._save_index_files(search_index, doc_collection)
         except openai.error.RateLimitError as e:
             raise ServiceUnavailableException(

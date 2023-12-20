@@ -7,8 +7,8 @@ readme = "README.md"
 packages = [{include = "generic_qa"}]
 
 [tool.poetry.dependencies]
-python = ">=3.10, <4.0.0"
-fastapi = "^0.95.2"
+python = ">=3.11, <4.0.0"
+fastapi = "^0.100.0"
 uvicorn = {extras = ["standard"], version = "^0.22.0"}
 google-cloud-storage = "^2.9.0"
 python-multipart = "^0.0.6"
@@ -18,7 +18,7 @@ pydub = "^0.25.1"
 google-cloud-texttospeech = "^2.14.1"
 google-cloud-translate = "^3.11.1"
 google-cloud-speech = "^2.19.0"
-asyncpg = "^0.27.0"
+asyncpg = "^0.28.0"
 boto3 = "^1.26.135"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
@@ -35,16 +35,16 @@ jb-audio-converter = {path = "../packages/jb-audio-converter", develop = true}
 jb-qa = {path = "../packages/jb-qa", develop = true}
 jb-translator = {path = "../packages/jb-translator", develop = true}
 jb-speech-processor = {path = "../packages/jb-speech-processor", develop = true}
-jb-feedback = {path = "../packages/jb-feedback", develop = true}
 jb-document-collection = {path = "../packages/jb-document-collection", develop = true}
 pymupdf = "1.22.3"
 python-docx = "^0.8.11"
 docx2txt = "^0.8"
 scikit-learn = "^1.2.2"
 jb-storage = {path = "../packages/jb-storage", develop = true}
-jb-tenant = {path = "../packages/jb-tenant", develop = true}
 prometheus-fastapi-instrumentator = "^6.1.0"
 azure-cognitiveservices-speech = "^1.32.1"
+azure-storage-blob = "^12.19.0"
+azure-identity = "^1.15.0"
 gpt-index = "0.8.42"
 langchain = "0.0.351"
 pypdf = "^3.17.3"

@@ -18,7 +18,6 @@ from jugalbandi.speech_processor import (
   DhruvaSpeechProcessor
 )
 from jugalbandi.audio_converter import convert_to_wav_with_ffmpeg
-from jugalbandi.tenant import TenantRepository
 from jugalbandi.document_collection import (
     DocumentRepository,
     DocumentSourceFile,
@@ -32,12 +31,9 @@ from jugalbandi.qa import (
     rephrased_question,
 )
 from auth_service import auth_app
-from jugalbandi.feedback import FeedbackRepository
 from .query_with_tfidf import querying_with_tfidf
 from .server_helper import (
-    get_api_key,
-    get_tenant_repository,
-    get_feedback_repository,
+    # get_api_key,
     get_gpt_index_qa_engine,
     get_langchain_gpt3_qa_engine,
     get_langchain_gpt35_turbo_qa_engine,
@@ -135,7 +131,7 @@ async def get_me(authorization: Annotated[User, Depends(verify_access_token)]):
 )
 async def upload_files(
     authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: Annotated[APIKey, Depends(get_api_key)],
+    # api_key: Annotated[APIKey, Depends(get_api_key)],
     files: List[UploadFile],
     document_repository: Annotated[
         DocumentRepository, Depends(get_document_repository)
@@ -167,7 +163,7 @@ async def upload_files(
 )
 async def query_using_gptindex(
     authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: Annotated[APIKey, Depends(get_api_key)],
+    # api_key: Annotated[APIKey, Depends(get_api_key)],
     query_string: str,
     gpt_index_qa_engine: Annotated[QAEngine, Depends(get_gpt_index_qa_engine)],
 ) -> QueryResponse:
@@ -186,7 +182,7 @@ async def query_using_gptindex(
 )
 async def query_using_langchain(
     authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: Annotated[APIKey, Depends(get_api_key)],
+    # api_key: Annotated[APIKey, Depends(get_api_key)],
     query_string: str,
     langchain_qa_engine: Annotated[QAEngine, Depends(get_langchain_gpt3_qa_engine)],
 ) -> QueryResponse:
@@ -205,7 +201,7 @@ async def query_using_langchain(
 )
 async def query_using_langchain_with_gpt3_5(
     authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: Annotated[APIKey, Depends(get_api_key)],
+    # api_key: Annotated[APIKey, Depends(get_api_key)],
     query_string: str,
     langchain_qa_engine: Annotated[
         QAEngine, Depends(get_langchain_gpt35_turbo_qa_engine)
@@ -226,7 +222,7 @@ async def query_using_langchain_with_gpt3_5(
 )
 async def query_using_langchain_with_gpt3_5_and_custom_prompt(
     authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: Annotated[APIKey, Depends(get_api_key)],
+    # api_key: Annotated[APIKey, Depends(get_api_key)],
     query_string: str,
     langchain_qa_engine: Annotated[
         QAEngine, Depends(get_langchain_gpt35_turbo_qa_engine)
@@ -258,7 +254,7 @@ async def query_using_langchain_with_gpt3_5_and_custom_prompt(
 )
 async def query_using_langchain_with_gpt4(
     authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: Annotated[APIKey, Depends(get_api_key)],
+    # api_key: Annotated[APIKey, Depends(get_api_key)],
     query_string: str,
     langchain_qa_engine: Annotated[QAEngine, Depends(get_langchain_gpt4_qa_engine)],
 ):
@@ -276,7 +272,7 @@ async def query_using_langchain_with_gpt4(
 )
 async def query_using_langchain_with_gpt4_and_custom_prompt(
     authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: Annotated[APIKey, Depends(get_api_key)],
+    # api_key: Annotated[APIKey, Depends(get_api_key)],
     query_string: str,
     langchain_qa_engine: Annotated[QAEngine, Depends(get_langchain_gpt4_qa_engine)],
     prompt: str = "",
@@ -295,7 +291,7 @@ async def query_using_langchain_with_gpt4_and_custom_prompt(
 )
 async def query_with_voice_input_gpt3_5(
     authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: Annotated[APIKey, Depends(get_api_key)],
+    # api_key: Annotated[APIKey, Depends(get_api_key)],
     langchain_qa_engine: Annotated[QAEngine,
                                    Depends(get_langchain_gpt35_turbo_qa_engine)],
     input_language: Language,
@@ -321,7 +317,7 @@ async def query_with_voice_input_gpt3_5(
 )
 async def query_with_voice_input_gpt4(
     authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: Annotated[APIKey, Depends(get_api_key)],
+    # api_key: Annotated[APIKey, Depends(get_api_key)],
     langchain_qa_engine: Annotated[QAEngine, Depends(get_langchain_gpt4_qa_engine)],
     input_language: Language,
     output_format: MediaFormat,
@@ -341,47 +337,47 @@ async def query_with_voice_input_gpt4(
 @app.get("/rephrased-query")
 async def get_rephrased_query(
     authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: Annotated[APIKey, Depends(get_api_key)],
+    # api_key: Annotated[APIKey, Depends(get_api_key)],
     query_string: str,
 ):
     answer = await rephrased_question(query_string)
     return {"given_query": query_string, "rephrased_query": answer}
 
 
-@app.get(
-    "/get-balance-quota",
-    summary="Get balance quota using api key",
-    tags=["Tenant Quota"],
-)
-async def get_balance_quota(
-    authorization: Annotated[User, Depends(verify_access_token)],
-    api_key: str,
-    tenant_repository: Annotated[TenantRepository, Depends(get_tenant_repository)],
-):
-    response = await tenant_repository.get_balance_quota_from_api_key(api_key)
-    if response is None:
-        raise IncorrectInputException("Invalid API key")
-    return {"balance_quota": response}
+# @app.get(
+#     "/get-balance-quota",
+#     summary="Get balance quota using api key",
+#     tags=["Tenant Quota"],
+# )
+# async def get_balance_quota(
+#     authorization: Annotated[User, Depends(verify_access_token)],
+#     api_key: str,
+#     tenant_repository: Annotated[TenantRepository, Depends(get_tenant_repository)],
+# ):
+#     response = await tenant_repository.get_balance_quota_from_api_key(api_key)
+#     if response is None:
+#         raise IncorrectInputException("Invalid API key")
+#     return {"balance_quota": response}
 
 
-@app.post("/response-feedback", include_in_schema=False)
-async def response_feedback(
-    authorization: Annotated[User, Depends(verify_access_token)],
-    feedback_repository: Annotated[
-        FeedbackRepository, Depends(get_feedback_repository)
-    ],
-    uuid_number: str,
-    query: str,
-    response: str,
-    feedback: bool,
-):
-    await feedback_repository.insert_response_feedback(
-        uuid_number=uuid_number,
-        query=query,
-        response=response,
-        feedback=feedback,
-    )
-    return "Feedback update is successful"
+# @app.post("/response-feedback", include_in_schema=False)
+# async def response_feedback(
+#     authorization: Annotated[User, Depends(verify_access_token)],
+#     feedback_repository: Annotated[
+#         FeedbackRepository, Depends(get_feedback_repository)
+#     ],
+#     uuid_number: str,
+#     query: str,
+#     response: str,
+#     feedback: bool,
+# ):
+#     await feedback_repository.insert_response_feedback(
+#         uuid_number=uuid_number,
+#         query=query,
+#         response=response,
+#         feedback=feedback,
+#     )
+#     return "Feedback update is successful"
 
 
 @app.post(

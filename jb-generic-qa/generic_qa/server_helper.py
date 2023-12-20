@@ -13,6 +13,7 @@ from jugalbandi.document_collection import (
     DocumentCollection,
     LocalStorage,
     GoogleStorage,
+    AzureStorage
 )
 from jugalbandi.qa import (
     GPTIndexQAEngine,
@@ -34,8 +35,8 @@ from jugalbandi.translator import (
     Translator,
 )
 from jugalbandi.auth_token.token import decode_token
-from jugalbandi.feedback import QAFeedbackRepository, FeedbackRepository
-from jugalbandi.tenant import TenantRepository
+# from jugalbandi.feedback import QAFeedbackRepository, FeedbackRepository
+# from jugalbandi.tenant import TenantRepository
 
 
 init_env()
@@ -60,13 +61,20 @@ async def verify_access_token(token: Annotated[str, Depends(reusable_oauth)]):
     return User(username=username, email=username)
 
 
+# @aiocached(cache={})
+# async def get_document_repository() -> DocumentRepository:
+#     # TODO: Rename the env variable
+#     return DocumentRepository(LocalStorage(os.environ["DOCUMENT_LOCAL_STORAGE_PATH"]),
+#                               GoogleStorage(os.environ["GCP_BUCKET_NAME"],
+#                               os.environ["GCP_BUCKET_FOLDER_NAME"]))
+
 @aiocached(cache={})
 async def get_document_repository() -> DocumentRepository:
     # TODO: Rename the env variable
     return DocumentRepository(LocalStorage(os.environ["DOCUMENT_LOCAL_STORAGE_PATH"]),
-                              GoogleStorage(os.environ["GCP_BUCKET_NAME"],
-                              os.environ["GCP_BUCKET_FOLDER_NAME"]))
-
+                              AzureStorage(os.environ["AZURE_BLOB_ACCOUNT_URL"],
+                              os.environ["AZURE_BLOB_CONTAINER"],
+                              os.environ["AZURE_BLOB_BASE_URL"]))
 
 async def get_document_collection(
     uuid_number: str,
@@ -135,14 +143,14 @@ async def get_langchain_gpt4_qa_engine(
     )
 
 
-@aiocached(cache={})
-async def get_feedback_repository() -> FeedbackRepository:
-    return QAFeedbackRepository()
+# @aiocached(cache={})
+# async def get_feedback_repository() -> FeedbackRepository:
+#     return QAFeedbackRepository()
 
 
-@aiocached(cache={})
-async def get_tenant_repository() -> TenantRepository:
-    return TenantRepository()
+# @aiocached(cache={})
+# async def get_tenant_repository() -> TenantRepository:
+#     return TenantRepository()
 
 
 @aiocached(cache={})
@@ -158,18 +166,18 @@ class User(BaseModel):
 api_key_header = APIKeyHeader(name="api_key", auto_error=False)
 
 
-async def get_api_key(tenant_repository: Annotated[TenantRepository,
-                                                   Depends(get_tenant_repository)],
-                      api_key_header: str = Security(api_key_header)):
-    if os.environ["ALLOW_INVALID_API_KEY"] != "true":
-        if api_key_header:
-            balance_quota = await tenant_repository.get_balance_quota_from_api_key(api_key_header)
-            if balance_quota is None:
-                raise UnAuthorisedException("API key is invalid")
-            else:
-                if balance_quota > 0:
-                    await tenant_repository.update_balance_quota(api_key_header, balance_quota)
-                else:
-                    raise QuotaExceededException("You have exceeded the Quota limit")
-        else:
-            raise UnAuthorisedException("API Key is missing")
+# async def get_api_key(tenant_repository: Annotated[TenantRepository,
+#                                                    Depends(get_tenant_repository)],
+#                       api_key_header: str = Security(api_key_header)):
+#     if os.environ["ALLOW_INVALID_API_KEY"] != "true":
+#         if api_key_header:
+#             balance_quota = await tenant_repository.get_balance_quota_from_api_key(api_key_header)
+#             if balance_quota is None:
+#                 raise UnAuthorisedException("API key is invalid")
+#             else:
+#                 if balance_quota > 0:
+#                     await tenant_repository.update_balance_quota(api_key_header, balance_quota)
+#                 else:
+#                     raise QuotaExceededException("You have exceeded the Quota limit")
+#         else:
+#             raise UnAuthorisedException("API Key is missing")

@@ -10,6 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import normalize
 import numpy as np
+import os
 from jugalbandi.core.errors import (
     InternalServerException,
     ServiceUnavailableException
@@ -159,8 +160,13 @@ async def querying_with_langchain_gpt3_5(document_collection: DocumentCollection
         model_name = "gpt-3.5-turbo"
 
     try:
-        search_index = FAISS.load_local(index_folder_path,
-                                        OpenAIEmbeddings(deployment="ada-002"))  # type: ignore
+        # check if OpenAI type is Azure then pass the deployment name
+        if os.environ["OPENAI_API_TYPE"] == "azure":
+            search_index = FAISS.load_local(index_folder_path,
+                                            OpenAIEmbeddings(client="",deployment=os.environ["OPENAI_EMBEDDINGS_DEPLOYMENT"]))
+        else:
+            search_index = FAISS.load_local(index_folder_path,
+                                                OpenAIEmbeddings())
         documents = search_index.similarity_search(query, k=5)
         if prompt != "":
             system_rules = prompt
@@ -177,13 +183,24 @@ async def querying_with_langchain_gpt3_5(document_collection: DocumentCollection
                 "\n\n-----\n\n".join(contexts) +
                 "\n\n-----\n\nQuery:" + query
             )
-            response = openai.ChatCompletion.create(
-                model=model_name,
-                messages=[
-                    {"role": "system", "content": system_rules},
-                    {"role": "user", "content": augmented_query},
-                ],
-            )
+
+            if os.environ["OPENAI_API_TYPE"] == "azure":
+                response = openai.ChatCompletion.create(
+                    model=model_name,
+                    engine=os.environ["OPENAI_CHATCOMPLETION_DEPLOYMENT"],
+                    messages=[
+                        {"role": "system", "content": system_rules},
+                        {"role": "user", "content": augmented_query},
+                    ],
+                )
+            else:
+                response = openai.ChatCompletion.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": system_rules},
+                        {"role": "user", "content": augmented_query},
+                    ],
+                )
         except openai.error.InvalidRequestError:
             contexts = [documents[i].page_content for i in range(len(documents)-2)]
             augmented_query = (
@@ -191,13 +208,24 @@ async def querying_with_langchain_gpt3_5(document_collection: DocumentCollection
                 "\n\n-----\n\n".join(contexts) +
                 "\n\n-----\n\nQuery:" + query
             )
-            response = openai.ChatCompletion.create(
-                model=model_name,
-                messages=[
-                    {"role": "system", "content": system_rules},
-                    {"role": "user", "content": augmented_query},
-                ],
-            )
+
+            if os.environ["OPENAI_API_TYPE"] == "azure":
+                response = openai.ChatCompletion.create(
+                    model=model_name,
+                    engine=os.environ["OPENAI_CHATCOMPLETION_DEPLOYMENT"],
+                    messages=[
+                        {"role": "system", "content": system_rules},
+                        {"role": "user", "content": augmented_query},
+                    ],
+                )
+            else:
+                response = openai.ChatCompletion.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": system_rules},
+                        {"role": "user", "content": augmented_query},
+                    ],
+                )
         result = response["choices"][0]["message"]["content"]
 
         if source_text_filtering:

@@ -219,6 +219,8 @@ class DocumentCollection:
     async def read_index_file(self, indexer: str, filename: str) -> bytes:
         index_file_name = self._index_filename(indexer, filename)
         index_file_name_fallback = self._index_filename_fallback(indexer, filename)
+        print (index_file_name)
+        print (index_file_name_fallback)
         if not await self.local_store.file_exists(index_file_name):
             if await self.remote_store.file_exists(index_file_name):
                 content = await self.remote_store.read_file(index_file_name)

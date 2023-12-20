@@ -54,7 +54,7 @@ class AzureStorage(Storage):
             yield blob.name[len(prefix):]
 
     async def file_exists(self, file_path: str) -> bool:
-        blob_name = f"{self.base_path}/{file_path}"
+        blob_name = f"{self.base_path}{file_path}"
         blob_client = self.client.get_blob_client(self.container_name, blob_name)
         return await blob_client.exists()
 

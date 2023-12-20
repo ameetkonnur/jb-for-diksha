@@ -13,7 +13,7 @@ from jugalbandi.document_collection import (
     DocumentCollection,
     DocumentFormat,
 )
-import json
+import json, os
 
 
 class Indexer(ABC):
@@ -74,7 +74,6 @@ class LangchainIndexer(Indexer):
                                                               DocumentFormat.TEXT)
             content = content.decode('utf-8')
             content = content.replace("\\n", "\n")
-            print(content)
             for chunk in self.splitter.split_text(content):
                 new_metadata = {
                     "source": str(counter),
@@ -86,13 +85,14 @@ class LangchainIndexer(Indexer):
                 )
                 counter += 1
         try:
-            print("into embeddings")
-            # search_index = FAISS.from_documents(source_chunks,
-            #                                     OpenAIEmbeddings(client=""))
-            search_index = FAISS.from_documents(source_chunks,
-                                                OpenAIEmbeddings(client="",deployment="ada-002"))
-            print("finished embeddings")
-            print(search_index)
+            # check if OpenAI type is Azure then pass the deployment name
+            if os.environ["OPENAI_API_TYPE"] == "azure":
+                search_index = FAISS.from_documents(source_chunks,
+                                                OpenAIEmbeddings(client="",deployment=os.environ["OPENAI_EMBEDDINGS_DEPLOYMENT"]))
+            else:
+                search_index = FAISS.from_documents(source_chunks,
+                                                    OpenAIEmbeddings(client=""))
+                
             await self._save_index_files(search_index, doc_collection)
         except openai.error.RateLimitError as e:
             raise ServiceUnavailableException(

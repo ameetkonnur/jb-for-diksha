@@ -260,7 +260,15 @@ class DocumentRepository:
         self.remote_store = remote_store
 
     def new_collection(self) -> DocumentCollection:
-        uuid_number = str(uuid.uuid1())
+
+        # Temporary solution for Jan'23 Launch
+        # Checks if Configuration already has a default Document Collection
+        # If set to None then create a new UUID else using the one set in the configuration
+        if os.environ["DOCUMENT_COLLECTION_ID"] == "NONE":
+            uuid_number = str(uuid.uuid1())
+        else:
+            uuid_number = os.environ["DOCUMENT_COLLECTION_ID"]
+
         new_collection = DocumentCollection(
             uuid_number, self.local_store, self.remote_store
         )

@@ -105,8 +105,13 @@ async def querying_with_langchain_gpt4(document_collection: DocumentCollection,
                                                    "index.pkl")
     index_folder_path = document_collection.local_index_folder("langchain")
     try:
-        search_index = FAISS.load_local(index_folder_path,
-                                        OpenAIEmbeddings(deployment="ada-002"))  # type: ignore
+        # check if OpenAI type is Azure then pass the deployment name
+        if os.environ["OPENAI_API_TYPE"] == "azure":
+            search_index = FAISS.load_local(index_folder_path,
+                                            OpenAIEmbeddings(deployment=os.environ["OPENAI_EMBEDDINGS_DEPLOYMENT"]))
+        else:
+            search_index = FAISS.load_local(index_folder_path,
+                                            OpenAIEmbeddings())  # type: ignore
         documents = search_index.similarity_search(query, k=5)
         contexts = [document.page_content for document in documents]
         augmented_query = augmented_query = (
@@ -123,13 +128,24 @@ async def querying_with_langchain_gpt4(document_collection: DocumentCollection,
                 "based on the provided information. If the information cannot be found "
                 "in the text provided, you admit that I don't know"
             )
-        res = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": system_rules},
-                {"role": "user", "content": augmented_query},
-            ],
-        )
+            
+        if os.environ["OPENAI_API_TYPE"] == "azure":
+            res = openai.ChatCompletion.create(
+                model="gpt-4",
+                engine=os.environ["OPENAI_CHATCOMPLETION_DEPLOYMENT"],
+                messages=[
+                    {"role": "system", "content": system_rules},
+                    {"role": "user", "content": augmented_query},
+                ],
+            )
+        else:
+            res = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": system_rules},
+                    {"role": "user", "content": augmented_query},
+                ],
+            )
         return res["choices"][0]["message"]["content"], []
 
     except openai.error.RateLimitError as e:

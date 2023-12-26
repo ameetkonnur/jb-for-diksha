@@ -45,7 +45,7 @@ class AzureStorage(Storage):
             raise FileNotFoundError(f"file {file_path} not found")
 
     def path(self, path_suffix: str):
-        return f"azure://{self.container_name}/{self._relative_path(path_suffix)}"
+        return f"azure://{self.container_name}{self._relative_path(path_suffix)}"
 
     async def list_files(self, folder_path: str) -> AsyncIterator[str]:
         prefix = f"{self._relative_path(folder_path)}/"
@@ -74,7 +74,7 @@ class AzureStorage(Storage):
             yield blob.name[len(prefix):]
 
     async def make_public(self, file_path: str) -> str:
-        blob_name = f"{self.base_path}/{file_path}"
+        blob_name = f"{self.base_path}{file_path}"
         blob_client = self.client.get_blob_client(self.container_name, blob_name)
         # #print ("\n" + str(self.client.get_user_delegation_key(datetime.utcnow(), datetime.utcnow() + timedelta(days=365))) + "\n")
         # sas_token = generate_blob_sas(
@@ -91,7 +91,7 @@ class AzureStorage(Storage):
         return f"{blob_client.url}"
     
     async def public_url(self, file_path: str) -> str:
-        blob_name = f"{self.base_path}/{file_path}"
+        blob_name = f"{self.base_path}{file_path}"
         blob_client = self.client.get_blob_client(self.container_name, blob_name)
 
         sas_token = generate_blob_sas(
@@ -106,7 +106,7 @@ class AzureStorage(Storage):
         return f"{blob_client.url}?{sas_token}"
 
     async def copy_file(self, file_path: str, target_container: str, target_file_path: str):
-        source_blob = f"{self.base_path}/{file_path}"
+        source_blob = f"{self.base_path}{file_path}"
         source_blob_client = self.client.get_blob_client(self.container_name, source_blob)
         target_blob_client = self.client.get_blob_client(target_container, target_file_path)
         copy_source_url = source_blob_client.url

@@ -66,7 +66,7 @@ async def querying_with_langchain(document_collection: DocumentCollection, query
     index_folder_path = document_collection.local_index_folder("langchain")
     try:
         search_index = FAISS.load_local(index_folder_path,
-                                        OpenAIEmbeddings(deployment="ada-002"))  # type: ignore
+                                        OpenAIEmbeddings())  # type: ignore
         chain = load_qa_with_sources_chain(
             OpenAI(temperature=0), chain_type="map_reduce"  # type: ignore
         )

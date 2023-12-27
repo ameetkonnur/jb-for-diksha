@@ -123,12 +123,7 @@ async def querying_with_langchain_gpt4(document_collection: DocumentCollection,
         if prompt != "":
             system_rules = prompt
         else:
-            system_rules = (
-                "You are a helpful legal assistant who answers questions only based on the information that is provided to you."
-                "If the information is not provided for that specific question, you simply respond by saying you’re sorry but you don’t have information to provide an answer."
-                "Every time you answer a question for which information was not directly provided, a kitten is killed."
-                "Your job is to ensure no kittens are killed. Save the kittens."
-            )
+            system_rules = system_rules = os.environ["GPT4_PROMPT"]
 
         if os.environ["OPENAI_API_TYPE"] == "azure":
             res = openai.ChatCompletion.create(
@@ -188,12 +183,7 @@ async def querying_with_langchain_gpt3_5(document_collection: DocumentCollection
         if prompt != "":
             system_rules = prompt
         else:
-            system_rules = (
-                "You are a helpful legal assistant who answers questions only based on the information that is provided to you."
-                "If the information is not provided for that specific question, you simply respond by saying you’re sorry but you don’t have information to provide an answer."
-                "Every time you answer a question for which information was not directly provided, a kitten is killed."
-                "Your job is to ensure no kittens are killed. Save the kittens."
-            )
+            system_rules = os.environ["GPT3_5_PROMPT"]
         try:
             contexts = [document.page_content for document in documents]
             augmented_query = (

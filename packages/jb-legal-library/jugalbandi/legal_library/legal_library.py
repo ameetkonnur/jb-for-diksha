@@ -304,7 +304,7 @@ class LegalLibrary(Library):
         processed_query = await self._preprocess_query(query)
         processed_query = processed_query.strip()
         await self.download_index_files("index.faiss", "index.pkl")
-        vector_db = FAISS.load_local("indexes", OpenAIEmbeddings(deployment="ada-002"))
+        vector_db = FAISS.load_local("indexes", OpenAIEmbeddings())
         docs = vector_db.similarity_search(query=query, k=10)
 
         contexts = []

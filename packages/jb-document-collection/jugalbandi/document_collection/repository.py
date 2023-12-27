@@ -212,6 +212,7 @@ class DocumentCollection:
     async def download_index_files(self, indexer: str, *filenames: str) -> str:
         for filename in filenames:
             index_file_name = self._index_filename(indexer, filename)
+            print (index_file_name)
             content = await self.read_index_file(indexer, filename)
             await self.local_store.write_file(index_file_name, content)
         return self._index_folder(indexer)
@@ -222,6 +223,7 @@ class DocumentCollection:
         print (index_file_name)
         print (index_file_name_fallback)
         if not await self.local_store.file_exists(index_file_name):
+            print("if file not exists locally")
             if await self.remote_store.file_exists(index_file_name):
                 content = await self.remote_store.read_file(index_file_name)
             elif await self.remote_store.file_exists(index_file_name_fallback):
@@ -229,6 +231,7 @@ class DocumentCollection:
             else:
                 raise FileNotFoundError(f"file {filename} not found")
         else:
+            print("if file exists locally")
             content = await self.local_store.read_file(index_file_name)
 
         return content
@@ -260,15 +263,7 @@ class DocumentRepository:
         self.remote_store = remote_store
 
     def new_collection(self) -> DocumentCollection:
-
-        # Temporary solution for Jan'23 Launch
-        # Checks if Configuration already has a default Document Collection
-        # If set to None then create a new UUID else using the one set in the configuration
-        if os.environ["DOCUMENT_COLLECTION_ID"] == "NONE":
-            uuid_number = str(uuid.uuid1())
-        else:
-            uuid_number = os.environ["DOCUMENT_COLLECTION_ID"]
-
+        uuid_number = str(uuid.uuid1())
         new_collection = DocumentCollection(
             uuid_number, self.local_store, self.remote_store
         )

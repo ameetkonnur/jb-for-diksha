@@ -128,7 +128,7 @@ async def querying_with_langchain_gpt4(document_collection: DocumentCollection,
                 "based on the provided information. If the information cannot be found "
                 "in the text provided, you admit that I don't know"
             )
-            
+
         if os.environ["OPENAI_API_TYPE"] == "azure":
             res = openai.ChatCompletion.create(
                 model="gpt-4",

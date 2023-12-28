@@ -2,7 +2,6 @@ from typing import AsyncIterator
 import os
 import logging
 from azure.storage.blob.aio import BlobServiceClient
-from azure.storage.blob import BlobServiceClient as BlobServiceClientSync
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity.aio import DefaultAzureCredential
 from .storage import Storage
@@ -23,7 +22,6 @@ class AzureStorage(Storage):
         self.container_name = container_name
         self.base_path = base_path
         self.client = BlobServiceClient(account_url=self.account_url, credential=DefaultAzureCredential())
-        self.blob_client_sync = BlobServiceClientSync(account_url=self.account_url, credential=DefaultAzureCredential())
 
     async def write_file(self, file_path: str, content: bytes):
         blob_name = f"{self.base_path}{file_path}"
@@ -77,19 +75,18 @@ class AzureStorage(Storage):
 
     async def make_public(self, file_path: str) -> str:
         blob_name = f"{self.base_path}{file_path}"
-        blob_client = self.blob_client_sync.get_blob_client(self.container_name, blob_name)
-        # #print ("\n" + str(self.client.get_user_delegation_key(datetime.utcnow(), datetime.utcnow() + timedelta(days=365))) + "\n")
-        # sas_token = generate_blob_sas(
-        #     account_name=self.client.account_name,
-        #     container_name=self.container_name,
-        #     blob_name=blob_name,
-        #     user_delegation_key=self.blob_client_sync.get_user_delegation_key(datetime.utcnow(), datetime.utcnow() + timedelta(days=365)),
-        #     permission=BlobSasPermissions(read=True),
-        #     start=datetime.utcnow(),
-        #     expiry=datetime.utcnow() + timedelta(days=365),
-        #     #DefaultAzureCredential=True
-        # )
-        return f"{blob_client.url}"
+        blob_client = self.client.get_blob_client(self.container_name, blob_name)
+
+        sas_token = generate_blob_sas(
+            account_name=self.client.account_name,
+            container_name=self.container_name,
+            blob_name=blob_name,
+            user_delegation_key= await self.client.get_user_delegation_key(datetime.utcnow() - timedelta(minutes=1), datetime.utcnow() + timedelta(minutes=1)),
+            permission=BlobSasPermissions(read=True),
+            start=datetime.utcnow() - timedelta(minutes=1),
+            expiry=datetime.utcnow() + timedelta(minutes=30),
+        )
+        return f"{blob_client.url}?{sas_token}"
     
     async def public_url(self, file_path: str) -> str:
         blob_name = f"{self.base_path}{file_path}"
@@ -99,9 +96,10 @@ class AzureStorage(Storage):
             account_name=self.client.account_name,
             container_name=self.container_name,
             blob_name=blob_name,
-            account_key=self.client.credential.account_key,
+            user_delegation_key= await self.client.get_user_delegation_key(datetime.utcnow() - timedelta(minutes=1), datetime.utcnow() + timedelta(minutes=1)),
             permission=BlobSasPermissions(read=True),
-            expiry=datetime.utcnow() + timedelta(minutes=5)
+            start=datetime.utcnow() - timedelta(minutes=1),
+            expiry=datetime.utcnow() + timedelta(minutes=30),
         )
 
         return f"{blob_client.url}?{sas_token}"

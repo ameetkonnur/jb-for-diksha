@@ -12,6 +12,7 @@ from tenacity import (
     retry_if_not_exception_type,
 )
 from azure.storage.blob import generate_blob_sas, BlobSasPermissions
+from azure.storage.blob import ContentSettings
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,14 @@ class AzureStorage(Storage):
     async def write_file(self, file_path: str, content: bytes):
         blob_name = f"{self.base_path}{file_path}"
         blob_client = self.client.get_blob_client(self.container_name, blob_name)
+        # if blob.name ends with mp3, set content type to audio/mpeg
         await blob_client.upload_blob(content, overwrite=True)
+        properties = await blob_client.get_blob_properties()
+        if blob_name.endswith(".mp3"):
+            content_settings = ContentSettings(content_type="audio/mpeg")
+            await blob_client.set_http_headers(content_settings=content_settings)
+        # else:
+        #     await blob_client.upload_blob(content, overwrite=True)
 
     @retry(
         wait=wait_random_exponential(multiplier=1, max=60),

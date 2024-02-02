@@ -10,3 +10,4 @@ __pycache__/
 .DS_Store
 indexes/
 packages/jb-experimentation/
+jb-generic-qa/env.list
